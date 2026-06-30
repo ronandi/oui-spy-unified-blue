@@ -25,6 +25,14 @@ jobs:
             role: node
             board: s3_devkitc
             chip: esp32s3
+          - env: v3_app_controlled_cardputer_adv
+            role: node
+            board: cardputer_adv
+            chip: esp32s3
+          - env: v3_node_manager_cardputer_adv
+            role: mgr
+            board: cardputer_adv
+            chip: esp32s3
           - env: v3_node_manager_wroom
             role: mgr
             board: wroom
@@ -117,6 +125,8 @@ jobs:
             |--------|------|-----------|-------------------|
             | XIAO ESP32-S3 | node | `oui-spy-node-xiao_s3-${{ github.ref_name }}.bin` | `oui-spy-node-xiao_s3-${{ github.ref_name }}-usb.tar.gz` |
             | ESP32-S3 N16R8 DevKitC | node | `oui-spy-node-s3_devkitc-${{ github.ref_name }}.bin` | `oui-spy-node-s3_devkitc-${{ github.ref_name }}-usb.tar.gz` |
+            | M5 Cardputer ADV | node | `oui-spy-node-cardputer_adv-${{ github.ref_name }}.bin` | `oui-spy-node-cardputer_adv-${{ github.ref_name }}-usb.tar.gz` |
+            | M5 Cardputer ADV | mgr  | `oui-spy-mgr-cardputer_adv-${{ github.ref_name }}.bin` | `oui-spy-mgr-cardputer_adv-${{ github.ref_name }}-usb.tar.gz` |
             | ESP32 WROOM   | mgr  | `oui-spy-mgr-wroom-${{ github.ref_name }}.bin`   | `oui-spy-mgr-wroom-${{ github.ref_name }}-usb.tar.gz` |
             | XIAO ESP32-S3 (recommended) | mgr  | `oui-spy-mgr-xiao_s3-${{ github.ref_name }}.bin` | `oui-spy-mgr-xiao_s3-${{ github.ref_name }}-usb.tar.gz` |
             | ESP32-S3 N16R8 DevKitC | mgr  | `oui-spy-mgr-s3_devkitc-${{ github.ref_name }}.bin` | `oui-spy-mgr-s3_devkitc-${{ github.ref_name }}-usb.tar.gz` |
