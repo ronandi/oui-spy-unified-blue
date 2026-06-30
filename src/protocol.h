@@ -45,6 +45,16 @@ extern volatile uint32_t g_engRawSeen;
 #define PIN_GPS_TX     43
 #endif
 
+// Some boards (e.g. M5 Cardputer ADV) power the onboard WS2812 from a rail that
+// must be driven high before use (PWR_EN, shared with the LCD backlight). Those
+// boards define PIN_LED_PWR_EN; every other board gets a no-op. Keyed on the
+// capability (gated LED rail), not a board name, so new boards reuse it for free.
+#ifdef PIN_LED_PWR_EN
+  #define OUISPY_BOARD_POWER_INIT() do { pinMode(PIN_LED_PWR_EN, OUTPUT); digitalWrite(PIN_LED_PWR_EN, HIGH); } while (0)
+#else
+  #define OUISPY_BOARD_POWER_INIT() ((void)0)
+#endif
+
 // Firmware version
 #ifndef FW_VERSION
 #define FW_VERSION     "0.4.7"

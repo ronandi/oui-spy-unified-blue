@@ -100,6 +100,7 @@ static void heartbeatTask(void*) {
 }
 
 void setup() {
+    OUISPY_BOARD_POWER_INIT();   // power any gated LED rail (e.g. Cardputer ADV PWR_EN) before LED use
     Serial.begin(115200);
     delay(300);
     Serial.println();

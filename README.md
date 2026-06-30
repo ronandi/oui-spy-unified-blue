@@ -191,7 +191,17 @@ USB-C · 8 MB flash · BLE 5 + WiFi · dual-core 240 MHz.
 | GPIO 21 | Onboard LED (active LOW) |
 | GPIO 43/44 | Optional hardware GPS TX/RX (otherwise phone GPS is relayed) |
 
-Managers run on **XIAO ESP32-S3** (recommended), **ESP32-S3 N16R8 DevKitC**, **XIAO ESP32-C3**, and **ESP32 WROOM**.
+Managers run on **XIAO ESP32-S3** (recommended), **ESP32-S3 N16R8 DevKitC**, **XIAO ESP32-C3**, **ESP32 WROOM**, and **M5 Cardputer ADV**.
+
+### Hardware — M5Stack Cardputer ADV
+Stamp-S3A (ESP32-S3FN8) · 8 MB flash · **no PSRAM** · native USB · 1750 mAh battery. Runs the same headless node/manager firmware (the LCD/keyboard are not used). Board id: `cardputer_adv`.
+
+| Pin | Function |
+|---|---|
+| GPIO 21 | Onboard WS2812 status LED (data) |
+| GPIO 38 | LED/backlight **PWR_EN** — driven high at boot so the WS2812 lights |
+
+> **Note:** the WS2812 data pin (GPIO 21) follows the Stamp-S3 convention and should be verified on your unit; the build runs regardless. **Download mode:** set the side power switch to OFF, hold **G0**, then apply power.
 
 ---
 
@@ -200,13 +210,15 @@ Managers run on **XIAO ESP32-S3** (recommended), **ESP32-S3 N16R8 DevKitC**, **X
 
 ### Firmware (PlatformIO)
 ```bash
-pio run -e v3_app_controlled             # node (XIAO ESP32-S3)
-pio run -e v3_app_controlled_s3_devkitc  # node (ESP32-S3 N16R8 DevKitC)
-pio run -e v3_node_manager_s3            # manager (XIAO ESP32-S3, recommended)
-pio run -e v3_node_manager_s3_devkitc   # manager (ESP32-S3 N16R8 DevKitC)
-pio run -e v3_node_manager_xiao_c3      # manager (XIAO ESP32-C3)
-pio run -e v3_node_manager_wroom        # manager (ESP32 WROOM)
-pio run -e v3_app_controlled -t upload  # flash
+pio run -e v3_app_controlled               # node (XIAO ESP32-S3)
+pio run -e v3_app_controlled_s3_devkitc    # node (ESP32-S3 N16R8 DevKitC)
+pio run -e v3_app_controlled_cardputer_adv # node (M5 Cardputer ADV)
+pio run -e v3_node_manager_s3              # manager (XIAO ESP32-S3, recommended)
+pio run -e v3_node_manager_s3_devkitc     # manager (ESP32-S3 N16R8 DevKitC)
+pio run -e v3_node_manager_cardputer_adv  # manager (M5 Cardputer ADV)
+pio run -e v3_node_manager_xiao_c3        # manager (XIAO ESP32-C3)
+pio run -e v3_node_manager_wroom          # manager (ESP32 WROOM)
+pio run -e v3_app_controlled -t upload    # flash
 pio device monitor                      # serial @ 115200
 ```
 Dependency: `NimBLE-Arduino`.

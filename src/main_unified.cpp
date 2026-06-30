@@ -63,6 +63,7 @@ volatile bool    hwAlertsSuppressed = false;
 // Hardware
 // ============================================================================
 static void initHardware(void) {
+    OUISPY_BOARD_POWER_INIT();   // power any gated LED rail (e.g. Cardputer ADV PWR_EN) before LED use
     pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
     OUISPY_LED_INIT();

@@ -4228,7 +4228,7 @@ class _OtaSectionState extends ConsumerState<_OtaSection> {
   static const String _autoWifiPrefKey = 'ota_auto_wifi_update';
   String _nodeBoard = 'xiao_s3';
   static const String _nodeBoardPrefKey = 'ota_node_board';
-  static const List<String> _nodeBoards = ['xiao_s3', 's3_devkitc'];
+  static const List<String> _nodeBoards = ['xiao_s3', 's3_devkitc', 'cardputer_adv'];
 
   @override
   void initState() {
