@@ -88,3 +88,8 @@ has an `int64 timestamp_ms`.
 3. Detection stamping and app control unaffected; phone GPS still works when no
    local fix.
 4. On-device fix takes precedence over phone GPS while fresh.
+
+**Build status (2026-07-01, mise+pio):** #1 ✅ — node builds with `OUISPY_HW_GPS` +
+`TinyGPSPlus@1.1.0`, `[SUCCESS]` (RAM 33.4% static / Flash 43.6%); manager/headless build
+with the flag off, confirming the guards compile out. #2–#4 require the Cap LoRa-1262 on real
+hardware (a live NMEA fix + the phone-vs-onboard arbitration can only be exercised on-device).

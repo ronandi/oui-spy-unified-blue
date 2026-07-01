@@ -106,3 +106,10 @@ counter/cache writes in the existing drain loop.
 3. Free heap with all node engines enabled stays ≥ 30 KB.
 4. App control still works identically; detection throughput unaffected.
 5. Headless boards produce byte-identical firmware to before (feature fully gated).
+
+**Build status (2026-07-01, mise+pio):** #1 ✅ — node builds with `M5Cardputer@1.1.1`
+(→ M5Unified 0.2.17 / M5GFX 0.2.24), `[SUCCESS]`, RAM 33.4% static / Flash 43.6%; manager
+and headless XIAO also `[SUCCESS]`, confirming the `#ifdef` guards compile out. #5 verified
+insofar as all envs compile (the guards drop the code); bit-identical binary not diffed. #2–#4
+require the physical device (runtime free-heap ≥30 KB and live UI can only be measured on-hardware —
+the 33.4% *static* figure is a strong positive signal, not a substitute for the runtime check).

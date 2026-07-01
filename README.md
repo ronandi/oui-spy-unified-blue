@@ -208,11 +208,23 @@ Stamp-S3A (ESP32-S3FN8) · 8 MB flash · **no PSRAM** · native USB · 1750 mAh 
 <details>
 <summary><b>Build from Source</b></summary>
 
+### Toolchain (mise + PlatformIO)
+This repo builds with the `pio` CLI managed by [mise](https://mise.jdx.dev) (which uses `uv`):
+```bash
+mise use -g "pipx:platformio"   # installs the `pio` CLI
+# uv-built venvs omit pip, which PlatformIO needs for some tool packages — bootstrap it once:
+"$(mise where pipx:platformio)/platformio/bin/python" -m ensurepip --upgrade
+```
+> **Mirror gotcha:** networks that filter `contabostorage.com` (Pi-hole / AdGuard / QUAD9) sinkhole
+> PlatformIO's package CDN. If tool downloads fail with "Connection refused", allowlist that domain
+> or pin its real IPs in `/etc/hosts`. Details in `docs/superpowers/specs/2026-06-30-cardputer-adv-support-design.md`.
+
 ### Firmware (PlatformIO)
+All envs are **build-verified** (RAM ~32–34%, Flash ~36–44% on the S3 targets):
 ```bash
 pio run -e v3_app_controlled               # node (XIAO ESP32-S3)
 pio run -e v3_app_controlled_s3_devkitc    # node (ESP32-S3 N16R8 DevKitC)
-pio run -e v3_app_controlled_cardputer_adv # node (M5 Cardputer ADV)
+pio run -e v3_app_controlled_cardputer_adv # node (M5 Cardputer ADV — LCD status + on-device GPS)
 pio run -e v3_node_manager_s3              # manager (XIAO ESP32-S3, recommended)
 pio run -e v3_node_manager_s3_devkitc     # manager (ESP32-S3 N16R8 DevKitC)
 pio run -e v3_node_manager_cardputer_adv  # manager (M5 Cardputer ADV)
@@ -221,7 +233,7 @@ pio run -e v3_node_manager_wroom          # manager (ESP32 WROOM)
 pio run -e v3_app_controlled -t upload    # flash
 pio device monitor                      # serial @ 115200
 ```
-Dependency: `NimBLE-Arduino`.
+Dependencies: `NimBLE-Arduino` (all envs); `M5Cardputer` + `TinyGPSPlus` (Cardputer node only, for the LCD status screen + on-device GPS).
 
 ### Companion App (Flutter 3.32+)
 ```bash

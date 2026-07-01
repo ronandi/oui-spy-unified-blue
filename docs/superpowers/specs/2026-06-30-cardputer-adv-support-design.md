@@ -159,7 +159,7 @@ The ADV slots into the existing node/manager topology with no protocol changes.
 | WS2812 data pin assumed GPIO 21 | **Confirmed** = GPIO 21 via M5Unified + Plume (`neopixelWrite(21,…)`); PWR_EN = GPIO 38. No longer a risk. |
 | No-PSRAM spool sizing | `det_spool` cap may be tuned lower for 8 MB / no-PSRAM RAM budget; confirm against XIAO-S3 (also 8 MB) which already runs without issue |
 | OTA asset id mismatch | Single source of truth: `cardputer_adv` used identically in flag + app list |
-| Can't build locally (no pio) | Provide exact env; rely on CI / user's pio to compile; keep config minimal & mirrored from a known-good 8 MB env |
+| Can't build locally (no pio) | **RESOLVED** — built locally via mise+pio (2026-07-01): node `[SUCCESS]` RAM 33.4% / Flash 43.6%, manager RAM 33.9% / Flash 36.3%. See README "Toolchain (mise + PlatformIO)". |
 
 ## 8. Acceptance criteria
 
