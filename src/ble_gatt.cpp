@@ -56,6 +56,10 @@ static NimBLECharacteristic* chrPcapStats = nullptr;
 static NimBLECharacteristic* chrPcapData = nullptr;
 
 static bool phoneConnected = false;
+#ifdef OUISPY_HAS_DISPLAY
+// Read-only accessor for the on-device status display (ui_status.cpp).
+bool blePhoneConnected(void) { return phoneConnected; }
+#endif
 static volatile bool pcapDownloadRunning = false;
 static volatile uint32_t mgrPhoneGoneMs = 0;
 static volatile bool mgrTornDown = false;

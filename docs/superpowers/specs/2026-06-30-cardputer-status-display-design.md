@@ -47,10 +47,12 @@ The ADV has no PSRAM; oui-spy already runs WiFi + NimBLE + engines + spool in
 | **M5GFX only** (recommended) | Lightest; display-only; smallest RAM/flash | Battery = DIY ADC on G10 (needs divider/cal); no power API |
 | **M5Unified / M5Cardputer** | `M5.Power.getBatteryVoltage()` free; proven panel init (Plume uses it); autodetects ADV | Heavier RAM/flash; pulls power/IMU/keyboard we don't need |
 
-**Recommendation:** **M5GFX-only**, and **defer the battery gauge** to a follow-up
-(show the other fields in v1). Rationale: the no-PSRAM budget is the binding
-constraint, and battery is the only field that needs the heavy stack. If battery is
-must-have-now, switch to M5Unified and measure heap.
+**Decision: M5Unified** (battery included). Rationale — **Plume is an existence proof**:
+it runs the full M5Unified/M5Cardputer stack **plus a 64 KB sprite** + WiFi-promisc +
+NimBLE + SD + GPS on this exact no-PSRAM board. We use **direct-draw, no sprite**, so we
+are *lighter than Plume on the heaviest item* and reclaim ~64 KB. The no-PSRAM heap is
+therefore not a real doubt — it's a routine first-flash check (§3), not a blocker. Using
+M5Unified matches the proven stack and gives `M5.Power.getBatteryLevel()` for free.
 
 ## 5. Design
 

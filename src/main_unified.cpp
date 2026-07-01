@@ -33,6 +33,7 @@
 #include "engines/unipwn.h"
 #include "engines/wardrive.h"
 #include "engines/pcap.h"
+#include "ui_status.h"
 
 #ifdef OUISPY_RGB_DARK
   #define OUISPY_LED_INIT()  neopixelWrite(PIN_NEOPIXEL, 0, 0, 0)
@@ -58,6 +59,16 @@ volatile uint8_t hwBuzzerVolume = 100;       // 0-255 PWM duty cycle
 volatile bool    hwLedEnabled = true;
 volatile uint8_t hwNeopixelBrightness = 50;
 volatile bool    hwAlertsSuppressed = false;
+
+#ifdef OUISPY_HAS_DISPLAY
+// Cosmetic snapshot read by the Cardputer status display (ui_status.cpp).
+// Written from the single detection drain loop; torn reads are harmless.
+volatile uint32_t g_totalDetections = 0;
+volatile uint8_t  g_lastDetEngine   = 0xFF;
+volatile int8_t   g_lastDetRssi     = 0;
+volatile uint32_t g_lastDetMs       = 0;
+volatile uint8_t  g_lastDetMac[6]   = {0};
+#endif
 
 // ============================================================================
 // Hardware
@@ -305,6 +316,14 @@ static void detectionNotifyTask(void* param) {
                               evtSsid);
                 continue;
             }
+
+#ifdef OUISPY_HAS_DISPLAY
+            g_totalDetections++;
+            g_lastDetEngine = evt.engine_id;
+            g_lastDetRssi   = evt.rssi;
+            g_lastDetMs     = millis();
+            memcpy((void*)g_lastDetMac, evt.mac, 6);
+#endif
 
             if (evt.engine_id == ENGINE_SKYSPY) {
                 if (isDroneDedupCooldown(evt.ext.odid.uav_id, evt.method)) continue;
@@ -920,6 +939,7 @@ void setup() {
     wifiStaSetEnabled(false);
 
     initHardware();
+    uiStatusInit();   // no-op unless OUISPY_HAS_DISPLAY (Cardputer LCD)
 
     // Load hardware config (buzzer/LED/neopixel) from NVS
     loadHardwareConfig();
