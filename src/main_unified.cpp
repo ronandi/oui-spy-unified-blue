@@ -34,6 +34,7 @@
 #include "engines/wardrive.h"
 #include "engines/pcap.h"
 #include "ui_status.h"
+#include "gps_reader.h"
 
 #ifdef OUISPY_RGB_DARK
   #define OUISPY_LED_INIT()  neopixelWrite(PIN_NEOPIXEL, 0, 0, 0)
@@ -940,6 +941,7 @@ void setup() {
 
     initHardware();
     uiStatusInit();   // no-op unless OUISPY_HAS_DISPLAY (Cardputer LCD)
+    gpsReaderInit();  // no-op unless OUISPY_HW_GPS (Cardputer UART GPS)
 
     // Load hardware config (buzzer/LED/neopixel) from NVS
     loadHardwareConfig();

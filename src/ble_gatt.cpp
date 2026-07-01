@@ -23,6 +23,7 @@
 #include "mesh_espnow.h"
 #include "ota_handler.h"
 #include "wifi_ota_handler.h"
+#include "gps_reader.h"
 #include <Arduino.h>
 #include <Preferences.h>
 #include <NimBLEDevice.h>
@@ -613,8 +614,16 @@ class GpsReceiveCallbacks : public NimBLECharacteristicCallbacks {
 
         GpsData gps;
         memcpy(&gps, val.data(), sizeof(GpsData));
-        memcpy((void*)&currentGps, &gps, sizeof(GpsData));
-        gpsValid = true;
+#ifdef OUISPY_HW_GPS
+        // On-device GPS wins while it has a fresh fix; phone GPS is the fallback.
+        bool onboardFresh = (g_gpsOnboardFreshMs != 0) &&
+            ((uint32_t)(millis() - g_gpsOnboardFreshMs) < GPS_ONBOARD_TTL_MS);
+        if (!onboardFresh)
+#endif
+        {
+            memcpy((void*)&currentGps, &gps, sizeof(GpsData));
+            gpsValid = true;
+        }
 
         if (val.length() > sizeof(GpsData)) {
             hwAlertsSuppressed = ((const uint8_t*)val.data())[sizeof(GpsData)] != 0;
