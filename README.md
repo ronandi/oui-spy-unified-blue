@@ -201,7 +201,7 @@ Stamp-S3A (ESP32-S3FN8) · 8 MB flash · **no PSRAM** · native USB · 1750 mAh 
 | GPIO 21 | Onboard WS2812 status LED (data) |
 | GPIO 38 | LED/backlight **PWR_EN** — driven high at boot so the WS2812 lights |
 
-> **Note:** the WS2812 data pin (GPIO 21) follows the Stamp-S3 convention and should be verified on your unit; the build runs regardless. **Download mode:** set the side power switch to OFF, hold **G0**, then apply power.
+> **Note:** GPIO 21 (WS2812 data) and GPIO 38 (PWR_EN) are confirmed against M5Unified and the [Plume](https://github.com/zmattmanz/plume) ADV firmware (`set_cardputer_led` → `neopixelWrite(21, …)`). The headless firmware must raise PWR_EN itself because — unlike a UI firmware — it never inits the LCD, whose driver would otherwise power that shared rail. **Download mode:** set the side power switch to OFF, hold **G0**, then apply power.
 
 ---
 

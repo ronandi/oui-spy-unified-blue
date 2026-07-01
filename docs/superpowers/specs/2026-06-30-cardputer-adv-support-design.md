@@ -156,7 +156,7 @@ The ADV slots into the existing node/manager topology with no protocol changes.
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| WS2812 data pin assumed GPIO 21 | Flag for on-hardware validation; LED is non-critical, build still works if wrong |
+| WS2812 data pin assumed GPIO 21 | **Confirmed** = GPIO 21 via M5Unified + Plume (`neopixelWrite(21,…)`); PWR_EN = GPIO 38. No longer a risk. |
 | No-PSRAM spool sizing | `det_spool` cap may be tuned lower for 8 MB / no-PSRAM RAM budget; confirm against XIAO-S3 (also 8 MB) which already runs without issue |
 | OTA asset id mismatch | Single source of truth: `cardputer_adv` used identically in flag + app list |
 | Can't build locally (no pio) | Provide exact env; rely on CI / user's pio to compile; keep config minimal & mirrored from a known-good 8 MB env |
@@ -170,3 +170,22 @@ The ADV slots into the existing node/manager topology with no protocol changes.
 4. Onboard RGB reflects status (PWR_EN high).
 5. `cardputer_adv` selectable in the app's node-board picker; OTA asset resolves.
 6. README documents the board and its download-mode entry.
+
+## 9. Reference implementations & confirmed hardware facts
+
+Cross-checked against two working ADV projects: **[Plume](https://github.com/zmattmanz/plume)**
+(standalone Flock/Raven detector for the ADV) and **[Bruce](https://github.com/BruceDevices/firmware)**.
+
+- **No-PSRAM/8 MB/qio** board config: matches Bruce's `m5stack-cardputer-adv.json` and
+  M5's own recommended env (`board = esp32-s3-devkitc-1` + M5Cardputer lib).
+- **RGB LED = GPIO 21** (WS2812; Bruce labels the part SK6812 RGBW — a 3-byte
+  `neopixelWrite` still lights it, W channel unused). **PWR_EN = GPIO 38**, shared
+  with the LCD backlight — headless firmware must drive it high explicitly.
+- **No piezo** — audible feedback on the ADV is the ES8311 I²S codec via
+  `M5Cardputer.Speaker.tone()`. GPIO-buzzer path is compiled out (`OUISPY_NO_BUZZER`).
+- **On-device GPS recipe** (for the future feature; e.g. Cap LoRa-1262 ATGM336H):
+  `HardwareSerial(2)`, **ESP RX = GPIO 15, ESP TX = GPIO 13**, baud auto-detect
+  starting 9600 (then 115200/38400), `TinyGPSPlus`, `setRxBufferSize(256)`.
+  (Note: RX/TX are 15/13 — the reverse of a naive reading of the Cap-bus labels.)
+- **No-PSRAM heap caution**: after WiFi+NimBLE, free internal heap is tight; validate
+  PCAP (2×16 KB internal) and the `det_spool` internal fallback cap on hardware.
