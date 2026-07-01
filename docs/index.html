@@ -554,7 +554,25 @@
       { name: 'firmware.bin',    offset: 0x10000 },
     ];
 
-    const FIRMWARE_BASE_ROOT = 'https://raw.githubusercontent.com/ronandi/oui-spy-unified-blue/companion/docs/firmware/';
+    // Resolve which GitHub repo to pull firmware from, so this page works
+    // unchanged on any fork AND upstream. Priority:
+    //   1. ?repo=owner/name  query override (handy for local testing)
+    //   2. the {owner}.github.io/{repo}/ URL this page is served from
+    //   3. UPSTREAM_REPO fallback (custom domains, localhost, file://)
+    const UPSTREAM_REPO = 'lukeswitz/oui-spy-unified-blue';
+    const FIRMWARE_BRANCH = 'companion';
+    const REPO_SLUG = (() => {
+      const override = new URLSearchParams(location.search).get('repo');
+      if (override && /^[\w.-]+\/[\w.-]+$/.test(override)) return override;
+      const m = location.hostname.match(/^([\w-]+)\.github\.io$/i);
+      if (m) {
+        const owner = m[1];
+        const seg = location.pathname.split('/').filter(Boolean)[0];
+        return `${owner}/${seg || owner + '.github.io'}`;
+      }
+      return UPSTREAM_REPO;
+    })();
+    const FIRMWARE_BASE_ROOT = `https://raw.githubusercontent.com/${REPO_SLUG}/${FIRMWARE_BRANCH}/docs/firmware/`;
     function firmwareBase() {
       return FIRMWARE_BASE_ROOT + TARGETS[currentTarget].path;
     }
@@ -562,7 +580,7 @@
     // Optional: pull from latest GitHub release if local docs/firmware/<target>/ missing.
     // Uses asset name convention: oui-spy-{role}-{board}-vX.Y.Z.bin + companion *-usb.tar.gz bundle.
     // Falls back to docs/firmware on 404 (legacy) — keeps offline-friendly path working.
-    const GH_RELEASE_API = 'https://api.github.com/repos/ronandi/oui-spy-unified-blue/releases/latest';
+    const GH_RELEASE_API = `https://api.github.com/repos/${REPO_SLUG}/releases/latest`;
     let _releaseAssetsCache = null;
     async function ghReleaseAssets() {
       if (_releaseAssetsCache) return _releaseAssetsCache;
