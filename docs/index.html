@@ -554,7 +554,7 @@
       { name: 'firmware.bin',    offset: 0x10000 },
     ];
 
-    const FIRMWARE_BASE_ROOT = 'https://raw.githubusercontent.com/lukeswitz/oui-spy-unified-blue/companion/docs/firmware/';
+    const FIRMWARE_BASE_ROOT = 'https://raw.githubusercontent.com/ronandi/oui-spy-unified-blue/companion/docs/firmware/';
     function firmwareBase() {
       return FIRMWARE_BASE_ROOT + TARGETS[currentTarget].path;
     }
@@ -562,7 +562,7 @@
     // Optional: pull from latest GitHub release if local docs/firmware/<target>/ missing.
     // Uses asset name convention: oui-spy-{role}-{board}-vX.Y.Z.bin + companion *-usb.tar.gz bundle.
     // Falls back to docs/firmware on 404 (legacy) — keeps offline-friendly path working.
-    const GH_RELEASE_API = 'https://api.github.com/repos/lukeswitz/oui-spy-unified-blue/releases/latest';
+    const GH_RELEASE_API = 'https://api.github.com/repos/ronandi/oui-spy-unified-blue/releases/latest';
     let _releaseAssetsCache = null;
     async function ghReleaseAssets() {
       if (_releaseAssetsCache) return _releaseAssetsCache;
