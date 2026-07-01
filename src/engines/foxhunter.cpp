@@ -283,6 +283,7 @@ static void foxhunterStop(void) {
 }
 
 static void foxhunterProximityBeep(void) {
+#ifndef OUISPY_NO_BUZZER
     if (!hwBuzzerEnabled || hwBuzzerVolume == 0) return;
     ledcSetup(0, 2400, 8);
     ledcAttachPin(PIN_BUZZER, 0);
@@ -290,6 +291,7 @@ static void foxhunterProximityBeep(void) {
     delay(30);
     ledcWrite(0, 0);
     ledcDetachPin(PIN_BUZZER);
+#endif
 }
 
 static void foxhunterLoop(void) {

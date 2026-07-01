@@ -64,8 +64,10 @@ volatile bool    hwAlertsSuppressed = false;
 // ============================================================================
 static void initHardware(void) {
     OUISPY_BOARD_POWER_INIT();   // power any gated LED rail (e.g. Cardputer ADV PWR_EN) before LED use
+#ifndef OUISPY_NO_BUZZER
     pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
+#endif
     OUISPY_LED_INIT();
 
     Serial.println("[HW] Pins initialized");
@@ -119,6 +121,7 @@ static bool isAlertableEngine(uint8_t engine_id) {
 
 /// Pleasant ascending three-note chime: E6 → G#6 → B6
 static void detectionChime(void) {
+#ifndef OUISPY_NO_BUZZER
     if (!hwBuzzerEnabled || hwBuzzerVolume == 0) return;
     const int notes[] = {1319, 1661, 1976};  // E6, G#6, B6 — major triad
     for (int i = 0; i < 3; i++) {
@@ -130,6 +133,7 @@ static void detectionChime(void) {
         delay(20);
     }
     ledcDetachPin(PIN_BUZZER);
+#endif
 }
 
 static QueueHandle_t chimeQueue = NULL;
@@ -163,6 +167,7 @@ static void requestChime(void) {
 // Boot melody — quick ascending chirp to indicate v3 app-controlled mode
 // ============================================================================
 static void playBootMelody(void) {
+#ifndef OUISPY_NO_BUZZER
     if (!hwBuzzerEnabled) return;
 
     const int notes[] = {523, 659, 784, 1047};  // C5, E5, G5, C6
@@ -175,6 +180,7 @@ static void playBootMelody(void) {
         delay(30);
     }
     ledcDetachPin(PIN_BUZZER);
+#endif
 }
 
 // ============================================================================

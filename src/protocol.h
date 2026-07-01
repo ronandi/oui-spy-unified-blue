@@ -50,7 +50,9 @@ extern volatile uint32_t g_engRawSeen;
 // boards define PIN_LED_PWR_EN; every other board gets a no-op. Keyed on the
 // capability (gated LED rail), not a board name, so new boards reuse it for free.
 #ifdef PIN_LED_PWR_EN
-  #define OUISPY_BOARD_POWER_INIT() do { pinMode(PIN_LED_PWR_EN, OUTPUT); digitalWrite(PIN_LED_PWR_EN, HIGH); } while (0)
+  // 50ms lets the LED/backlight rail (and its decoupling caps) stabilize after
+  // the load switch enables before the first WS2812/SK6812 data frame.
+  #define OUISPY_BOARD_POWER_INIT() do { pinMode(PIN_LED_PWR_EN, OUTPUT); digitalWrite(PIN_LED_PWR_EN, HIGH); delay(50); } while (0)
 #else
   #define OUISPY_BOARD_POWER_INIT() ((void)0)
 #endif
