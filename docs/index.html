@@ -555,15 +555,14 @@
     ];
 
     // Resolve which GitHub repo to pull firmware from, so this page works
-    // unchanged on any fork AND upstream. Priority:
-    //   1. ?repo=owner/name  query override (handy for local testing)
-    //   2. the {owner}.github.io/{repo}/ URL this page is served from
-    //   3. UPSTREAM_REPO fallback (custom domains, localhost, file://)
+    // unchanged on any fork AND upstream. Derived ONLY from the page's own
+    // origin — never from query/hash/referrer — so a crafted link cannot point
+    // the flasher at an attacker-controlled firmware source:
+    //   1. the {owner}.github.io/{repo}/ URL this page is served from
+    //   2. UPSTREAM_REPO fallback (custom domains, localhost, file://)
     const UPSTREAM_REPO = 'lukeswitz/oui-spy-unified-blue';
     const FIRMWARE_BRANCH = 'companion';
     const REPO_SLUG = (() => {
-      const override = new URLSearchParams(location.search).get('repo');
-      if (override && /^[\w.-]+\/[\w.-]+$/.test(override)) return override;
       const m = location.hostname.match(/^([\w-]+)\.github\.io$/i);
       if (m) {
         const owner = m[1];
