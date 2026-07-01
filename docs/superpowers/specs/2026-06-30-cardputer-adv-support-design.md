@@ -202,7 +202,10 @@ mfg `0x09C8`, Raven UUIDs, TN-serial, Penguin-decimal). Deltas evaluated:
   - `d8:a0:d8` → **unregistered** (not in IEEE DB; speculative).
   - `a0:b7:65` → **Espressif Inc.** (matches *every* ESP32/ESP8266 device — huge FP surface).
   oui-spy correctly excludes all three.
-- **Safe SSID additions**: `OFS_IoT`, `PFS_` (Flock IoT SSID prefixes, absent from oui-spy).
+- **SSID patterns — nothing to add**: Plume's `OFS_IoT`/`PFS_` are already caught by
+  oui-spy's existing `"FS_"` pattern, since the matcher is `strcasestr()`
+  (case-insensitive **substring**) — `OFS_IoT`/`PFS_` both contain `FS_`. oui-spy's
+  substring set subsumes Plume's entire SSID list.
 - **`00:09:01` (Shenzhen Shixuntong / XUNTONG, Penguin battery)**: low value as a WiFi OUI —
   the Penguin is already caught via **BLE mfg ID `0x09C8`** which oui-spy matches.
 - **5 GHz reality (corrects an earlier over-claim)**: Flock Falcon V2 uses a LiteOn
