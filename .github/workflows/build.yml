@@ -1,0 +1,63 @@
+name: Build Check
+
+# Compile-verify firmware on every change (release.yml only builds on tags).
+# Runs a representative subset covering all three chip archs, both roles, the
+# Cardputer ADV, and the two envs with unique source files (ble/rid target).
+on:
+  push:
+    branches: [companion]
+    paths:
+      - 'src/**'
+      - 'boards/**'
+      - 'platformio.ini'
+      - 'partitions*.csv'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'boards/**'
+      - 'platformio.ini'
+      - 'partitions*.csv'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - v3_app_controlled_cardputer_adv   # Cardputer ADV node — LCD + GPS (most code)
+          - v3_node_manager_cardputer_adv      # Cardputer ADV manager
+          - v3_app_controlled                  # XIAO ESP32-S3 (headless baseline)
+          - v3_node_manager_xiao_c3            # ESP32-C3 (RISC-V)
+          - v3_node_manager_wroom              # ESP32 (Xtensa, non-S3)
+          - v3_ble_target                      # unique source: ble_target.cpp
+          - v3_rid_target                      # unique source: rid_target.cpp
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: pio-${{ matrix.env }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ matrix.env }}-
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build ${{ matrix.env }}
+        run: pio run -e ${{ matrix.env }}

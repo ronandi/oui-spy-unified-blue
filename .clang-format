@@ -1,0 +1,19 @@
+# Approximates the existing OUI-SPY firmware style (4-space, attach braces,
+# left-aligned pointers, 100-col). Opt-in: run `just fmt` (it reflows the tree).
+BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+PointerAlignment: Left
+DerivePointerAlignment: false
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+SortIncludes: false
+IncludeBlocks: Preserve
+SpacesBeforeTrailingComments: 2
+AlignAfterOpenBracket: Align
+KeepEmptyLinesAtTheStartOfBlocks: false
+Cpp11BracedListStyle: true

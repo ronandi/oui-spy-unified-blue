@@ -13,6 +13,7 @@ Thumbs.db
 # Build artifacts
 *.o
 *.d
+compile_commands.json
 
 # Python
 __pycache__/
