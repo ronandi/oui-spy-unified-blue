@@ -189,3 +189,28 @@ Cross-checked against two working ADV projects: **[Plume](https://github.com/zma
   (Note: RX/TX are 15/13 — the reverse of a naive reading of the Cap-bus labels.)
 - **No-PSRAM heap caution**: after WiFi+NimBLE, free internal heap is tight; validate
   PCAP (2×16 KB internal) and the `det_spool` internal fallback cap on hardware.
+
+## 10. Detection cross-pollination — research notes
+
+oui-spy already shares lineage with Plume (`flock_oui.h` credits `zmattmanz/flock-detection`)
+and is a superset on detection (67 OUIs, active wildcard-probe TX, addr1/2/3 OUI match,
+mfg `0x09C8`, Raven UUIDs, TN-serial, Penguin-decimal). Deltas evaluated:
+
+- **Plume's "pending" OUIs — DO NOT ADD** (IEEE-registry verified, all false-positive risks):
+  - `4c:6e:44` → *IEEE Registration Authority* (MA-M/MA-S **shared block**; a /24 match
+    over-matches unrelated vendors).
+  - `d8:a0:d8` → **unregistered** (not in IEEE DB; speculative).
+  - `a0:b7:65` → **Espressif Inc.** (matches *every* ESP32/ESP8266 device — huge FP surface).
+  oui-spy correctly excludes all three.
+- **Safe SSID additions**: `OFS_IoT`, `PFS_` (Flock IoT SSID prefixes, absent from oui-spy).
+- **`00:09:01` (Shenzhen Shixuntong / XUNTONG, Penguin battery)**: low value as a WiFi OUI —
+  the Penguin is already caught via **BLE mfg ID `0x09C8`** which oui-spy matches.
+- **5 GHz reality (corrects an earlier over-claim)**: Flock Falcon V2 uses a LiteOn
+  802.11 a/b/g/n/**ac** chipset (FCC ID WCBN3510A) so the hardware is 5 GHz-*capable*, but
+  field observations put Flock WiFi on **2.4 GHz ch 1/6/11**, WiFi is a **setup/maintenance**
+  interface (not always-on), and backhaul is **cellular (LTE)**. A 5 GHz sniffer (needs an
+  **ESP32-C5**, dual-band; C6 is 2.4 GHz-only) is edge-case completeness, **not** a critical
+  gap — 2.4 GHz WiFi + BLE (already covered) catches Flock in practice. Source:
+  ryanohoro.com Falcon teardown, Wikipedia.
+- **Deferred**: graded 0–100 confidence in the detection payload; GPS-UTC timestamping for
+  detections (adopt with the on-device-GPS feature — prefer GPS UTC, fall back to monotonic).
