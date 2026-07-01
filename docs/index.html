@@ -232,6 +232,10 @@
       color: var(--success);
     }
 
+    .log-entry.warn {
+      color: #e0a800;
+    }
+
     @keyframes fadeIn {
       to { opacity: 1; }
     }
@@ -650,6 +654,32 @@
       throw new Error(`Failed to fetch ${name}: ${resp.status}`);
     }
 
+    // Integrity manifest: sha256.json committed alongside each target's bins,
+    // mapping "{part}.bin" -> lowercase hex sha256. Verified before each part is
+    // written. Bytes are identical whether pulled from docs/firmware or the
+    // release-asset fallback (same CI build), so one manifest covers both.
+    // Trust boundary: this defends against transport tampering, corruption, and
+    // wrong/partial uploads — NOT a full repo compromise (an attacker with push
+    // access rewrites both bin and manifest).
+    const _manifestCache = {};
+    async function fetchManifest() {
+      if (currentTarget in _manifestCache) return _manifestCache[currentTarget];
+      let manifest = null;
+      try {
+        const r = await fetch(`${firmwareBase()}sha256.json`, { cache: 'no-store' });
+        if (r.ok) {
+          const j = await r.json();
+          manifest = j.files || j;   // accept {files:{...}} or a bare {name:hex} map
+        }
+      } catch { /* treated as missing */ }
+      _manifestCache[currentTarget] = manifest;
+      return manifest;
+    }
+    async function sha256hex(bytes) {
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     window.setTarget = function(key) {
       if (!TARGETS[key]) return;
       currentTarget = key;
@@ -694,10 +724,26 @@
         log('Downloading firmware binaries...');
         setProgress(0, 'DOWNLOADING BINARIES...');
 
+        const manifest = await fetchManifest();
+        if (!manifest) {
+          log('⚠ No integrity manifest (sha256.json) for this target — flashing WITHOUT verification.', 'warn');
+        }
+
         const flashFiles = [];
         for (let i = 0; i < FLASH_CONFIG.length; i++) {
           const cfg = FLASH_CONFIG[i];
           const data = await fetchFirmware(cfg.name);
+          if (manifest) {
+            const want = String(manifest[cfg.name] || '').toLowerCase();
+            if (!/^[0-9a-f]{64}$/.test(want)) {
+              throw new Error(`Manifest has no valid sha256 for ${cfg.name} — refusing to flash.`);
+            }
+            const got = await sha256hex(data);
+            if (got !== want) {
+              throw new Error(`Integrity check FAILED for ${cfg.name}: expected ${want.slice(0, 12)}… got ${got.slice(0, 12)}… — aborting.`);
+            }
+            log(`  ✓ ${cfg.name} verified (${got.slice(0, 12)}…)`, 'success');
+          }
           const addr = (cfg.name === 'bootloader.bin' && TARGETS[currentTarget].bootloaderOffset != null)
             ? TARGETS[currentTarget].bootloaderOffset
             : cfg.offset;

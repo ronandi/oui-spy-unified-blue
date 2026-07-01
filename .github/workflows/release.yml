@@ -107,6 +107,11 @@ jobs:
           cp ".pio/build/${ENV}/firmware.bin"   "$DEST/firmware.bin"
           BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -path "*/partitions/*" | head -1)
           cp "$BOOT_APP0" "$DEST/boot_app0.bin"
+          # Integrity manifest ({part}.bin -> sha256 hex) verified by the web
+          # flasher before writing each part.
+          ( cd "$DEST" && sha256sum bootloader.bin partitions.bin boot_app0.bin firmware.bin ) \
+            | python3 -c "import sys,json; print(json.dumps({l.split()[1]: l.split()[0] for l in sys.stdin if l.strip()}, indent=2))" \
+            > "$DEST/sha256.json"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -144,7 +149,7 @@ jobs:
             base=$(basename "$d")
             mkdir -p "docs/firmware/$base"
             cp "$d/bootloader.bin" "$d/partitions.bin" "$d/boot_app0.bin" "$d/firmware.bin" \
-               "docs/firmware/$base/"
+               "$d/sha256.json" "docs/firmware/$base/"
           done
           rm -rf _webflash
 
