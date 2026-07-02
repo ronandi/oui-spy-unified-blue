@@ -8,8 +8,14 @@
 
 Read a real GNSS fix from a UART GPS (the **Cap LoRa-1262's ATGM336H**, or any
 NEO-6M/BN-220-class module) and populate the existing `currentGps`/`gpsValid`
-state — so detections carry **on-device coordinates without a phone**, the status
-screen's `GPS` row shows a live fix, and detection times can use **GPS UTC**.
+state, so the status screen's `GPS` row shows a live fix **without a phone**, with
+**GPS UTC** stamped into `currentGps.timestamp_ms`.
+
+> **Scope reality (see §9):** on-device GPS is **display-only** in v1. Geo-stamping
+> *detections* on-device would need a new field in the `DetectionEvent` BLE payload, and the
+> companion app is a **fixed external TestFlight build** — changing the wire format would break
+> its parser. So `currentGps` feeds the LCD (and is ready for a future *on-device* consumer,
+> e.g. SD/pcap timestamps), not the app-bound detection stream.
 
 Today `currentGps` is written **only** from the phone app over BLE
 (`ble_gatt.cpp:616`); `PIN_GPS_RX/TX` exist but nothing reads them.
@@ -93,3 +99,21 @@ has an `int64 timestamp_ms`.
 `TinyGPSPlus@1.1.0`, `[SUCCESS]` (RAM 33.4% static / Flash 43.6%); manager/headless build
 with the flag off, confirming the guards compile out. #2–#4 require the Cap LoRa-1262 on real
 hardware (a live NMEA fix + the phone-vs-onboard arbitration can only be exercised on-device).
+
+## 9. Review outcome & fixes (3-lens: embedded / esp32 / cpp)
+
+Reviewed via the `cardputer-adv-firmware` subagent; fixes applied and rebuilt clean.
+
+- **[fixed] Baud auto-detect livelock** — cycled on "no bytes for 3 s", but a wrong-baud
+  module streams garbage bytes, so it never cycled. Now cycles while `passedChecksum()==0`
+  (no valid NMEA ever) after 5 s; locks once a good sentence parses. `gps_reader.cpp`.
+- **[fixed] Task stacks were bytes, not words** (ESP-IDF `xTaskCreate` arg is bytes): UI task
+  3072→**8192** (M5GFX draws + double snprintf), GPS task 3072→**4096**.
+- **[fixed] `currentGps` cross-core race** — GPS task (core 1) + BLE callback (core 0) +
+  LCD reader now serialized by a `portMUX_TYPE g_gpsMux` around all whole-struct access.
+- **[fixed] `setRxBufferSize()` after `begin()`** (no-op on ESP32) → moved before `begin()`.
+- **[verified correct, untouched]** `utc_to_epoch_ms` (exact days_from_civil), watchdog
+  (tasks `vTaskDelay` → idle feeds TWDT), `M5Cardputer.begin()` ordering (RGB_DARK writes once,
+  no recurring RMT), freshness-gate millis-wrap math.
+- **[scope, WON'T-DO in v1]** on-device GPS has no detection consumer — the app is a fixed
+  TestFlight build, so geo-stamping is out (see §1). Display-only stands.

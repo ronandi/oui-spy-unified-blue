@@ -24,6 +24,9 @@
 #include "ota_handler.h"
 #include "wifi_ota_handler.h"
 #include "gps_reader.h"
+#ifdef OUISPY_HW_GPS
+extern portMUX_TYPE g_gpsMux;   // defined in main_unified.cpp
+#endif
 #include <Arduino.h>
 #include <Preferences.h>
 #include <NimBLEDevice.h>
@@ -618,12 +621,16 @@ class GpsReceiveCallbacks : public NimBLECharacteristicCallbacks {
         // On-device GPS wins while it has a fresh fix; phone GPS is the fallback.
         bool onboardFresh = (g_gpsOnboardFreshMs != 0) &&
             ((uint32_t)(millis() - g_gpsOnboardFreshMs) < GPS_ONBOARD_TTL_MS);
-        if (!onboardFresh)
-#endif
-        {
+        if (!onboardFresh) {
+            portENTER_CRITICAL(&g_gpsMux);   // serialize vs the GPS reader task (core 1)
             memcpy((void*)&currentGps, &gps, sizeof(GpsData));
             gpsValid = true;
+            portEXIT_CRITICAL(&g_gpsMux);
         }
+#else
+        memcpy((void*)&currentGps, &gps, sizeof(GpsData));
+        gpsValid = true;
+#endif
 
         if (val.length() > sizeof(GpsData)) {
             hwAlertsSuppressed = ((const uint8_t*)val.data())[sizeof(GpsData)] != 0;

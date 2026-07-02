@@ -19,6 +19,7 @@ extern volatile uint8_t  g_lastDetMac[6];
 bool blePhoneConnected(void);            // ble_gatt.cpp
 extern volatile GpsData currentGps;      // main_unified.cpp
 extern volatile bool     gpsValid;
+extern portMUX_TYPE      g_gpsMux;       // main_unified.cpp
 
 // RGB565
 #define COL_BG    0x0000
@@ -93,10 +94,14 @@ static void renderStatus(void) {
         drawRow(3, 56, COL_DIM, "LAST --");
     }
 
-    // 4 — GPS (from phone app, or on-device GPS once added)
-    if (gpsValid) {
-        snprintf(buf, sizeof(buf), "GPS  %.4f,%.4f",
-                 currentGps.latitude, currentGps.longitude);
+    // 4 — GPS (from phone app, or the on-device reader). Copy under the lock so
+    // a concurrent whole-struct write (GPS task / BLE callback) can't tear lat/lon.
+    bool gpsOk; double gLat, gLon;
+    portENTER_CRITICAL(&g_gpsMux);
+    gpsOk = gpsValid; gLat = currentGps.latitude; gLon = currentGps.longitude;
+    portEXIT_CRITICAL(&g_gpsMux);
+    if (gpsOk) {
+        snprintf(buf, sizeof(buf), "GPS  %.4f,%.4f", gLat, gLon);
         drawRow(4, 74, COL_TEXT, buf);
     } else {
         drawRow(4, 74, COL_DIM, "GPS  no fix");
@@ -124,7 +129,9 @@ void uiStatusInit(void) {
     M5Cardputer.Display.fillScreen(COL_BG);
     memset(s_cache, 0, sizeof(s_cache));
     // Low priority on core 1 so it never competes with the radios (core 0).
-    xTaskCreatePinnedToCore(UiStatusTask, "UiStatus", 3072, NULL, 1, NULL, 1);
+    // 8192 bytes (ESP-IDF stack arg is bytes): headroom for M5GFX draw calls +
+    // double->ASCII snprintf on the render path.
+    xTaskCreatePinnedToCore(UiStatusTask, "UiStatus", 8192, NULL, 1, NULL, 1);
     Serial.println("[UI] Status display started");
 }
 

@@ -54,6 +54,12 @@ QueueHandle_t engineCmdQueue = NULL;
 volatile GpsData currentGps = {};
 volatile bool gpsValid = false;
 
+#if defined(OUISPY_HW_GPS) || defined(OUISPY_HAS_DISPLAY)
+// Serializes whole-struct access to currentGps across the GPS reader task (core 1),
+// the NimBLE GPS-write callback (core 0), and the status-display reader.
+portMUX_TYPE g_gpsMux = portMUX_INITIALIZER_UNLOCKED;
+#endif
+
 // Hardware config — loaded from NVS at boot, updated live by BLE writes
 volatile bool    hwBuzzerEnabled = true;
 volatile uint8_t hwBuzzerVolume = 100;       // 0-255 PWM duty cycle

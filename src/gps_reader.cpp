@@ -9,6 +9,7 @@
 
 extern volatile GpsData currentGps;
 extern volatile bool     gpsValid;
+extern portMUX_TYPE      g_gpsMux;   // defined in main_unified.cpp
 
 volatile uint32_t g_gpsOnboardFreshMs = 0;
 
@@ -31,8 +32,8 @@ static int64_t utc_to_epoch_ms(uint16_t y, uint8_t mo, uint8_t d,
 
 static void open_at(uint32_t baud) {
     s_serial.end();
+    s_serial.setRxBufferSize(256);   // must precede begin() — RX buffer is allocated there
     s_serial.begin(baud, SERIAL_8N1, PIN_GPS_RX, PIN_GPS_TX);
-    s_serial.setRxBufferSize(256);
 }
 
 static void publish_fix(void) {
@@ -49,41 +50,43 @@ static void publish_fix(void) {
                                          s_gps.date.day(), s_gps.time.hour(),
                                          s_gps.time.minute(), s_gps.time.second());
     }
+    portENTER_CRITICAL(&g_gpsMux);
     memcpy((void*)&currentGps, &g, sizeof(GpsData));
     gpsValid = true;
-    g_gpsOnboardFreshMs = millis();
+    portEXIT_CRITICAL(&g_gpsMux);
+    g_gpsOnboardFreshMs = millis();   // 32-bit, atomic — fine outside the lock
 }
 
 static void GpsReaderTask(void* pv) {
     (void)pv;
     const uint32_t bauds[] = { 9600, 115200, 38400 };  // ATGM336H default first
+    const int nbaud = (int)(sizeof(bauds) / sizeof(bauds[0]));
     int bi = 0;
     open_at(bauds[0]);
-    uint32_t lastByteMs = millis();
+    uint32_t baudOpenedMs = millis();
 
     for (;;) {
-        bool any = false;
         while (s_serial.available()) {
-            any = true;
             if (s_gps.encode((char)s_serial.read()) &&
                 s_gps.location.isUpdated() && s_gps.location.isValid()) {
                 publish_fix();
             }
         }
-        if (any) lastByteMs = millis();
-
-        // No traffic and no fix yet -> module may be at a different baud; cycle.
-        if (!s_gps.location.isValid() && (millis() - lastByteMs) > 3000u) {
-            bi = (bi + 1) % (int)(sizeof(bauds) / sizeof(bauds[0]));
+        // Cycle baud only while NO valid NMEA has ever been parsed. A wrong-baud
+        // module still streams garbage bytes, so byte-presence can't gate this —
+        // passedChecksum() is cumulative, so once >0 we've locked the right baud
+        // and never cycle again (even during a satellite-search with no fix yet).
+        if (s_gps.passedChecksum() == 0 && (millis() - baudOpenedMs) > 5000u) {
+            bi = (bi + 1) % nbaud;
             open_at(bauds[bi]);
-            lastByteMs = millis();
+            baudOpenedMs = millis();
         }
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
 void gpsReaderInit(void) {
-    xTaskCreatePinnedToCore(GpsReaderTask, "GpsReader", 3072, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(GpsReaderTask, "GpsReader", 4096, NULL, 1, NULL, 1);
     Serial.printf("[GPS] on-device reader started (RX=%d TX=%d)\n", PIN_GPS_RX, PIN_GPS_TX);
 }
 
