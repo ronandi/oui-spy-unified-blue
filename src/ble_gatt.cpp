@@ -619,14 +619,16 @@ class GpsReceiveCallbacks : public NimBLECharacteristicCallbacks {
         memcpy(&gps, val.data(), sizeof(GpsData));
 #ifdef OUISPY_HW_GPS
         // On-device GPS wins while it has a fresh fix; phone GPS is the fallback.
+        // Freshness check AND write must be under the same lock, else a phone write
+        // can pass the check just as the GPS task publishes a fix and clobber it.
+        portENTER_CRITICAL(&g_gpsMux);
         bool onboardFresh = (g_gpsOnboardFreshMs != 0) &&
             ((uint32_t)(millis() - g_gpsOnboardFreshMs) < GPS_ONBOARD_TTL_MS);
         if (!onboardFresh) {
-            portENTER_CRITICAL(&g_gpsMux);   // serialize vs the GPS reader task (core 1)
             memcpy((void*)&currentGps, &gps, sizeof(GpsData));
             gpsValid = true;
-            portEXIT_CRITICAL(&g_gpsMux);
         }
+        portEXIT_CRITICAL(&g_gpsMux);
 #else
         memcpy((void*)&currentGps, &gps, sizeof(GpsData));
         gpsValid = true;

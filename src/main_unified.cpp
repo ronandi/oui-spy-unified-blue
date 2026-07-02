@@ -946,8 +946,6 @@ void setup() {
     wifiStaSetEnabled(false);
 
     initHardware();
-    uiStatusInit();   // no-op unless OUISPY_HAS_DISPLAY (Cardputer LCD)
-    gpsReaderInit();  // no-op unless OUISPY_HW_GPS (Cardputer UART GPS)
 
     // Load hardware config (buzzer/LED/neopixel) from NVS
     loadHardwareConfig();
@@ -966,6 +964,11 @@ void setup() {
 
     // Initialize engine registry
     engineRegistryInit();
+
+    // Start the Cardputer LCD status + on-device GPS reader only now that the
+    // queues and engine registry exist (UiStatusTask reads engineGetActiveMask()).
+    uiStatusInit();   // no-op unless OUISPY_HAS_DISPLAY (Cardputer LCD)
+    gpsReaderInit();  // no-op unless OUISPY_HW_GPS (Cardputer UART GPS)
 
     // Register all engines
     engineRegister(ENGINE_DETECTOR, &detectorCallbacks);

@@ -32,7 +32,7 @@ static int64_t utc_to_epoch_ms(uint16_t y, uint8_t mo, uint8_t d,
 
 static void open_at(uint32_t baud) {
     s_serial.end();
-    s_serial.setRxBufferSize(256);   // must precede begin() — RX buffer is allocated there
+    s_serial.setRxBufferSize(512);   // must precede begin(); 512 covers 115200-baud modules vs the 20ms poll
     s_serial.begin(baud, SERIAL_8N1, PIN_GPS_RX, PIN_GPS_TX);
 }
 
@@ -51,10 +51,10 @@ static void publish_fix(void) {
                                          s_gps.time.minute(), s_gps.time.second());
     }
     portENTER_CRITICAL(&g_gpsMux);
+    g_gpsOnboardFreshMs = millis();   // under the lock so the phone-write check can't race the publish
     memcpy((void*)&currentGps, &g, sizeof(GpsData));
     gpsValid = true;
     portEXIT_CRITICAL(&g_gpsMux);
-    g_gpsOnboardFreshMs = millis();   // 32-bit, atomic — fine outside the lock
 }
 
 static void GpsReaderTask(void* pv) {
