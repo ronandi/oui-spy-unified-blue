@@ -630,6 +630,12 @@ class GpsReceiveCallbacks : public NimBLECharacteristicCallbacks {
         }
         portEXIT_CRITICAL(&g_gpsMux);
 #else
+        // Unlocked by design: this branch compiles only without OUISPY_HW_GPS.
+        // g_gpsMux's only reader is the display, and the ADV node always sets
+        // HW_GPS+HAS_DISPLAY together (→ takes the locked branch above), while
+        // manager/headless have no display reader. If a display-WITHOUT-GPS env is
+        // ever added, wrap this write in g_gpsMux like the branch above — otherwise
+        // it races the UI reader.
         memcpy((void*)&currentGps, &gps, sizeof(GpsData));
         gpsValid = true;
 #endif
